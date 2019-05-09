@@ -1,0 +1,45 @@
+service: stellarauth-postgresql
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  # - serverless-domain-manager
+
+custom:
+  # customDomain:
+  #   domainName: api.stellarauth.com
+  #   certificateName: api.stellarauth.com
+  #   stage: dev
+  #   createRoute53Record: false
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+  serverless-offline:
+    port: 5000
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: us-east-1
+  environment: ${file(env.yml):${self:provider.stage}}
+  # vpc:
+  #   securityGroupIds:
+  #     - 01966402253c4fef3
+  #   subnetIds:
+  #     - d0422cb5
+  #     - 0a970206
+  #     - 1a68ef27
+  #     - 3ba56f4d
+  #     - 4f03ee17
+  #     - 4ba1be60
+
+functions:
+  users:
+    handler: handler.users
+    # timeout: 30
+    events:
+      - http:
+          method: ANY
+          path: users
+          cors: true
