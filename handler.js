@@ -1,5 +1,9 @@
 import _ from 'lodash'
+import axios from 'axios'
 import { Pool } from 'pg'
+
+const isDev = process.env.NODE_ENV !== 'production'
+const authUrl = isDev ? 'http://localhost:4000/auth' : 'https://api.stellarauth.com/auth'
 
 const pool = new Pool({
   user: process.env.PG_USER,
@@ -13,9 +17,16 @@ const headers = {
   'Access-Control-Allow-Origin': '*'
 }
 
-const get = (event, context) => {
+const get = async (event, context) => {
   const q_id = _.get(event, 'queryStringParameters.id')
-  return getUser(q_id)
+  const q_hash = _.get(event, 'queryStringParameters.hash')
+  const q_token = _.get(event, 'queryStringParameters.token')
+
+  return getUser({
+    id: q_id,
+    hash: q_hash,
+    token: q_token
+  })
 }
 
 const post = (event, context) => {
@@ -26,11 +37,18 @@ const put = (event, context) => {
   return putUser(JSON.parse(event.body))
 }
 
-async function getUser(id) {
+async function getUser({hash, token}) {
   try {
+    const transaction = await axios.get(authUrl, {
+      params: {
+        hash,
+        token
+      }
+    }).then(({data}) => data)
+
     const result = await pool.query(`
       select * from users 
-      where id='${id}'
+      where id='${transaction.source_account}'
     `)
 
     if (result.rows[0])
@@ -41,15 +59,11 @@ async function getUser(id) {
       }
 
     else
-      throw {message: 'User not found'}
+      throw 'User not found'
   } 
   
   catch(err) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify(err)
-    }
+    return parseError(err)
   }
 }
 
@@ -68,27 +82,31 @@ async function postUser(data) {
   } 
   
   catch(err) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify(err)
-    }
+    return parseError(err)
   }
 }
 
 async function putUser(data) {
   try {
+    const transaction = await axios.get(authUrl, {
+      params: {
+        hash: data.hash,
+        token: data.token
+      }
+    }).then(({data}) => data)
+
     let query = 'update users set '
 
     _.each(data, (value, key) => {
       if (
-        key !== 'id'
+        typeof value === 'string'
+        && ['hash', 'token'].indexOf(key) === -1
         && ['email', 'fname', 'lname', 'note'].indexOf(key) !== -1
       ) query += `${key}='${value}',`
     })
 
     query = query.substring(0, query.length - 1)
-    query += ` where id='${data.id}'`
+    query += ` where id='${transaction.source_account}'`
 
     const result = await pool.query(query)
 
@@ -100,11 +118,29 @@ async function putUser(data) {
   } 
 
   catch(err) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify(err)
-    }
+    return parseError(err)
+  }
+}
+
+function parseError(err) {
+  const error = 
+  typeof err === 'string' 
+  ? { message: err } 
+  : err.response && err.response.data 
+  ? err.response.data 
+  : err.response 
+  ? err.response
+  : err.message 
+  ? { message: err.message }
+  : err
+
+  console.error(error)
+  // console.error(err)
+
+  return {
+    statusCode: error.status || err.status || 400,
+    headers,
+    body: JSON.stringify(error)
   }
 }
 
