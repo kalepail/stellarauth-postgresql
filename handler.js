@@ -18,15 +18,9 @@ const headers = {
 }
 
 const get = async (event, context) => {
-  const q_id = _.get(event, 'queryStringParameters.id')
-  const q_hash = _.get(event, 'queryStringParameters.hash')
-  const q_token = _.get(event, 'queryStringParameters.token')
+  const q_auth = _.get(event, 'queryStringParameters.auth')
 
-  return getUser({
-    id: q_id,
-    hash: q_hash,
-    token: q_token
-  })
+  return getUser(q_auth)
 }
 
 const post = (event, context) => {
@@ -37,12 +31,11 @@ const put = (event, context) => {
   return putUser(JSON.parse(event.body))
 }
 
-async function getUser({hash, token}) {
+async function getUser(auth) {
   try {
     const transaction = await axios.get(authUrl, {
-      params: {
-        hash,
-        token
+      headers: {
+        Authorization: `Bearer ${auth}`
       }
     }).then(({data}) => data)
 
@@ -89,9 +82,8 @@ async function postUser(data) {
 async function putUser(data) {
   try {
     const transaction = await axios.get(authUrl, {
-      params: {
-        hash: data.hash,
-        token: data.token
+      headers: {
+        Authorization: `Bearer ${data.auth}`
       }
     }).then(({data}) => data)
 
@@ -100,7 +92,7 @@ async function putUser(data) {
     _.each(data, (value, key) => {
       if (
         typeof value === 'string'
-        && ['hash', 'token'].indexOf(key) === -1
+        && ['auth'].indexOf(key) === -1
         && ['email', 'fname', 'lname', 'note'].indexOf(key) !== -1
       ) query += `${key}='${value}',`
     })
