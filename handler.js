@@ -92,13 +92,15 @@ async function putUser(data) {
     _.each(data, (value, key) => {
       if (
         typeof value === 'string'
-        && ['auth'].indexOf(key) === -1
         && ['email', 'fname', 'lname', 'note'].indexOf(key) !== -1
       ) query += `${key}='${value}',`
     })
 
     query = query.substring(0, query.length - 1)
     query += ` where id='${transaction.source_account}'`
+
+    if (query.indexOf('set where') !== -1)
+      throw 'Nothing to update'
 
     const result = await pool.query(query)
 
