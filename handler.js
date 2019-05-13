@@ -44,7 +44,7 @@ async function getUser(auth) {
       where id='${transaction.source_account}'
     `)
 
-    if (result.rows[0])
+    if (_.get(result, 'rows[0]'))
       return {
         statusCode: 200,
         headers,
