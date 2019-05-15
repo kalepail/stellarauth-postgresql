@@ -3,24 +3,30 @@ import axios from 'axios'
 import { Pool } from 'pg'
 
 const isDev = process.env.NODE_ENV !== 'production'
-const authUrl = isDev ? 'http://localhost:4000/auth' : 'https://api.stellarauth.com/auth'
+const authUrl = isDev ? 'https://localhost:4000/auth' : 'https://api.stellarauth.com/auth'
+
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = isDev ? 0 : 1
 
 const pool = new Pool({
-  user: process.env.PG_USER,
   host: process.env.PG_HOST,
+  port: process.env.PG_PORT,
+  user: process.env.PG_USER,
   database: process.env.PG_DATABASE,
   password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 10,
+  ssl: true,
+  max: 1
 })
 
 const headers = {
   'Access-Control-Allow-Origin': '*'
 }
 
-const get = async (event, context) => {
-  const q_auth = _.get(event, 'queryStringParameters.auth')
-
-  return getUser(q_auth)
+const get = (event, context) => {
+  return getUser(
+    _.get(event, 'queryStringParameters.auth')
+  )
 }
 
 const post = (event, context) => {
