@@ -16,7 +16,7 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 10,
   ssl: true,
-  max: 1
+  max: 1000
 })
 
 const headers = {
