@@ -3,14 +3,8 @@ service: stellarauth-postgresql
 plugins:
   - serverless-webpack
   - serverless-offline
-  # - serverless-domain-manager
 
 custom:
-  # customDomain:
-  #   domainName: api.stellarauth.com
-  #   certificateName: api.stellarauth.com
-  #   stage: dev
-  #   createRoute53Record: false
   webpack:
     webpackConfig: ./webpack.config.js
     includeModules: true
@@ -23,7 +17,7 @@ provider:
   runtime: nodejs8.10
   stage: dev
   region: us-east-1
-  environment: ${file(env.yml):${self:provider.stage}}
+  environment: ${file(env.yml)}
 
 functions:
   users:
