@@ -54,4 +54,4 @@ env.yml
 # Certs
 certs
 
-!users.sql
+!*.sql
