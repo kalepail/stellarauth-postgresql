@@ -3,7 +3,9 @@ import axios from 'axios'
 import { Pool } from 'pg'
 
 const isDev = process.env.NODE_ENV !== 'production'
-const authUrl = isDev ? 'https://localhost:4000/auth' : 'https://api-testnet.stellarauth.com/auth'
+const isTest = true
+
+const authUrl = isDev ? 'https://localhost:4000/auth' : isTest ? 'https://api-testnet.stellarauth.com/auth' : 'https://api.stellarauth.com/auth'
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = isDev ? 0 : 1
 
