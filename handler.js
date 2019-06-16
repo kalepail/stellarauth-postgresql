@@ -43,8 +43,8 @@ const put = (event, context) => {
 
 async function getUser(auth) {
   try {
-    const {nwk} = jwt.decode(auth)
-    setAuthUrl(nwk)
+    const {network} = jwt.decode(auth)
+    setAuthUrl(network)
 
     const transaction = await axios.get(authUrl, {
       headers: {
@@ -94,8 +94,8 @@ async function postUser(data) {
 
 async function putUser(data) {
   try {
-    const {nwk} = jwt.decode(data.auth)
-    setAuthUrl(nwk)
+    const {network} = jwt.decode(data.auth)
+    setAuthUrl(network)
 
     const transaction = await axios.get(authUrl, {
       headers: {
