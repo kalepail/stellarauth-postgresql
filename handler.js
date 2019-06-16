@@ -1,11 +1,13 @@
 import _ from 'lodash'
 import axios from 'axios'
 import { Pool } from 'pg'
+import jwt from 'jsonwebtoken'
 
-const isDev = process.env.NODE_ENV !== 'production'
-const isTest = true
+let isDev
+let isTest
+let authUrl
 
-const authUrl = isDev ? 'https://localhost:4000/auth' : isTest ? 'https://api-testnet.stellarauth.com/auth' : 'https://api.stellarauth.com/auth'
+setAuthUrl()
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = isDev ? 0 : 1
 
@@ -41,6 +43,9 @@ const put = (event, context) => {
 
 async function getUser(auth) {
   try {
+    const {nwk} = jwt.decode(auth)
+    setAuthUrl(nwk)
+
     const transaction = await axios.get(authUrl, {
       headers: {
         Authorization: `Bearer ${auth}`
@@ -89,6 +94,9 @@ async function postUser(data) {
 
 async function putUser(data) {
   try {
+    const {nwk} = jwt.decode(data.auth)
+    setAuthUrl(nwk)
+
     const transaction = await axios.get(authUrl, {
       headers: {
         Authorization: `Bearer ${data.auth}`
@@ -144,6 +152,12 @@ function parseError(err) {
     headers,
     body: JSON.stringify(error)
   }
+}
+
+function setAuthUrl(network) {
+  isDev = process.env.NODE_ENV !== 'production'
+  isTest = network === 'test'
+  authUrl = isDev ? 'https://localhost:4000/auth' : isTest ? 'https://api-testnet.stellarauth.com/auth' : 'https://api.stellarauth.com/auth'
 }
 
 export const users = (event, context, callback) => {
